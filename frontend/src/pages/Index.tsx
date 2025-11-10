@@ -10,6 +10,9 @@ import ExplanationCard from "@/components/ExplanationCard";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 
+// ✅ CACHE SIMPLES EM MEMÓRIA PARA ECONOMIZAR REQUISIÇÕES
+const forecastCache: Record<string, any> = {};
+
 const Index = () => {
   // ==== ESTADOS ====
   const [oceanData, setOceanData] = useState<any>(null); // dados do mar
@@ -18,26 +21,39 @@ const Index = () => {
   const [level, setLevel] = useState("iniciante");
   const [explanation, setExplanation] = useState<string>("");
 
-  // novos seletores de dia separados
-  const [selectedDayOcean, setSelectedDayOcean] = useState(0); // muda o card e gráficos
-  const [selectedDayExplain, setSelectedDayExplain] = useState(0); // muda só a explicação
+  // novos seletores de dia
+  const [selectedDayOcean, setSelectedDayOcean] = useState(0); // card e gráficos
+  const [selectedDayExplain, setSelectedDayExplain] = useState(0); // explicação
 
-  // ✅ Usa a URL do backend configurada no arquivo .env
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+  // ✅ SUA API ONLINE
+  const API_BASE = "https://explicasurf-backend.onrender.com";
 
-console.log("API BASE CARREGADA:", API_BASE);
-
-
-  // ==== BUSCA DE DADOS DO MAR ====
+  // ✅ BUSCA DE DADOS DO MAR (com cache)
   useEffect(() => {
     const fetchOcean = async () => {
+      const cacheKey = `${level}-${selectedDayOcean}`;
+
+      // ✅ 1 — SE JÁ TEM NO CACHE, NÃO CHAMA A API NOVAMENTE
+      if (forecastCache[cacheKey]) {
+        setOceanData(forecastCache[cacheKey]);
+        return;
+      }
+
       try {
         setLoadingData(true);
+
         const res = await fetch(
           `${API_BASE}/api/explain?level=${level}&day=${selectedDayOcean}`
         );
+
         if (!res.ok) throw new Error("Falha ao buscar dados");
+
         const json = await res.json();
+
+        // ✅ 2 — GUARDAR NO CACHE PARA USAR DEPOIS
+        forecastCache[cacheKey] = json;
+
+        // ✅ 3 — ATUALIZAR UI
         setOceanData(json);
       } catch (err) {
         console.error(err);
@@ -46,10 +62,11 @@ console.log("API BASE CARREGADA:", API_BASE);
         setLoadingData(false);
       }
     };
+
     fetchOcean();
   }, [selectedDayOcean, level]);
 
-  // ==== GERA EXPLICAÇÃO COM IA ====
+  // ✅ GERA EXPLICAÇÃO PERSONALIZADA
   const handleGenerateExplanation = async () => {
     try {
       setLoadingExplain(true);
@@ -58,6 +75,7 @@ console.log("API BASE CARREGADA:", API_BASE);
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
+
       if (userError || !user) throw new Error("Usuário não autenticado");
 
       const { data: profileData, error: profileError } = await supabase
@@ -66,7 +84,6 @@ console.log("API BASE CARREGADA:", API_BASE);
         .eq("id", user.id)
         .single();
 
-      console.log("=== PERFIL DO SUPABASE ===", profileData);
       if (profileError) console.warn("Erro ao buscar perfil:", profileError);
 
       const name = profileData?.name || "Surfista";
@@ -81,6 +98,7 @@ console.log("API BASE CARREGADA:", API_BASE);
       );
 
       if (!res.ok) throw new Error("Falha ao gerar explicação");
+
       const json = await res.json();
       setExplanation(json.explanation_pt || "Erro ao gerar explicação.");
     } catch (err) {
@@ -91,7 +109,7 @@ console.log("API BASE CARREGADA:", API_BASE);
     }
   };
 
-  // ==== INTERFACE ====
+  // ✅ INTERFACE
   return (
     <main className="flex flex-col gap-8 max-w-6xl mx-auto px-4 py-8">
       <Header />
@@ -102,6 +120,7 @@ console.log("API BASE CARREGADA:", API_BASE);
         <h2 className="text-lg font-semibold mb-2 text-blue-700">
           🌊 Selecione o dia para ver as condições do mar
         </h2>
+
         <div className="flex gap-3 justify-center mb-4">
           {["Hoje", "Amanhã", "Depois"].map((label, index) => (
             <button
@@ -118,12 +137,11 @@ console.log("API BASE CARREGADA:", API_BASE);
           ))}
         </div>
 
-        {/*  CARD DE CONDIÇÕES */}
+        {/* ✅ CARD DE CONDIÇÕES */}
         <OceanDataCard
-        forecast={oceanData?.forecast_day ?? null}
-        isLoading={loadingData}
-      />
-
+          forecast={oceanData?.forecast_now ?? null}
+          isLoading={loadingData}
+        />
       </section>
 
       {/* === PAINEL DE EXPLICAÇÃO PERSONALIZADA === */}
@@ -139,7 +157,7 @@ console.log("API BASE CARREGADA:", API_BASE);
           isLoading={loadingExplain}
         />
 
-        {/* Seletor de dia separado para explicação */}
+        {/* Seletor de dia para explicação */}
         <div className="flex gap-3 justify-center mt-2">
           {["Hoje", "Amanhã", "Depois"].map((label, index) => (
             <button
@@ -165,7 +183,7 @@ console.log("API BASE CARREGADA:", API_BASE);
         </button>
       </section>
 
-      {/* === CARD DE EXPLICAÇÃO === */}
+      {/* === EXPLICAÇÃO === */}
       {explanation && (
         <ExplanationCard
           explanation={explanation}
@@ -208,3 +226,4 @@ console.log("API BASE CARREGADA:", API_BASE);
 };
 
 export default Index;
+
