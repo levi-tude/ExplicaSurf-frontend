@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,12 +8,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
-import ProfilePage from "./pages/ProfilePage"; // ✅ nova página
+import ProfilePage from "./pages/ProfilePage"; // 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
-// rota protegida (só acessa se estiver logado)
+// ✅ Rota protegida (acesso se estiver logado)
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="text-center mt-10">Carregando...</div>;
@@ -20,13 +21,11 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   return children;
 };
 
-// rotas da aplicação
+// ✅ Definição das rotas
 const AppRoutes = () => (
   <Routes>
-    {/* login / cadastro */}
     <Route path="/auth" element={<AuthPage />} />
 
-    {/* home protegida */}
     <Route
       path="/"
       element={
@@ -36,7 +35,6 @@ const AppRoutes = () => (
       }
     />
 
-    {/* página de perfil protegida */}
     <Route
       path="/perfil"
       element={
@@ -46,26 +44,34 @@ const AppRoutes = () => (
       }
     />
 
-    {/* rota 404 */}
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
 
-// app principal
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+// ✅ App principal
+const App = () => {
 
-      {/* ✅ BrowserRouter vem antes do AuthProvider */}
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  // ✅ Acorda o backend automaticamente ao carregar o site
+  useEffect(() => {
+    fetch("/api/warmup").catch(() => null);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+
+        {/* ✅ BrowserRouter vem antes do AuthProvider */}
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
+
