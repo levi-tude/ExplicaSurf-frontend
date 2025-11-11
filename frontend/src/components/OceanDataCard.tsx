@@ -206,7 +206,3 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
 };
 
 export default OceanDataCard;
-
-};
-
-export default OceanDataCard;
