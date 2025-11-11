@@ -13,7 +13,6 @@ interface Forecast {
   energy: number | null;
   energy_level: string | null;
 
-  // 🌧️ NOVOS CAMPOS DE CLIMA
   precip_mm?: number | null;
   precip_probability?: number | null;
   clouds?: number | null;
@@ -54,7 +53,6 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     );
   }
 
-  // ===================== DADOS =====================
   const {
     wave_height_m,
     period_s,
@@ -65,38 +63,49 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     wind_dir_deg,
     energy,
     energy_level,
-
-    // 🌧️ CLIMA
     precip_mm,
     precip_probability,
     clouds,
     temp_c,
   } = forecast;
 
-  const periodo = wave_period_s ?? period_s ?? null;
-  const direcaoSwell = wave_direction_deg ?? wave_dir_deg ?? null;
+  const periodo =
+    typeof wave_period_s === "number"
+      ? wave_period_s
+      : typeof period_s === "number"
+      ? period_s
+      : null;
 
-  // ===================== STATUS DO CÉU =====================
+  const direcaoSwell =
+    typeof wave_direction_deg === "number"
+      ? wave_direction_deg
+      : typeof wave_dir_deg === "number"
+      ? wave_dir_deg
+      : null;
+
   const getSkyIcon = () => {
-    if (precip_probability && precip_probability >= 70) return "🌧️";
-    if (clouds && clouds >= 70) return "☁️";
-    if (clouds && clouds >= 40) return "⛅";
-    if (clouds && clouds >= 10) return "🌤️";
+    if (typeof precip_probability === "number" && precip_probability >= 70)
+      return "🌧️";
+    if (typeof clouds === "number" && clouds >= 70) return "☁️";
+    if (typeof clouds === "number" && clouds >= 40) return "⛅";
+    if (typeof clouds === "number" && clouds >= 10) return "🌤️";
     return "☀️";
   };
 
   const skyIcon = getSkyIcon();
 
-  // ===================== PRÓXIMA MARÉ =====================
   let tideNextText = "--";
   const nextType = forecast?.tide?.next_extreme?.type;
   const nextDate = forecast?.tide?.next_extreme?.date;
 
   if (nextType && nextDate) {
-    const hora = new Date(nextDate).toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    let hora = "--";
+    try {
+      hora = new Date(nextDate).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {}
 
     if (nextType.toLowerCase() === "high") {
       tideNextText = `Maré toda cheia às ${hora}`;
@@ -105,54 +114,59 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     }
   }
 
-  // ===================== RENDER =====================
   return (
     <div className="rounded-2xl border border-border p-4">
-      <h3 className="text-lg font-semibold mb-2">🌊 Condições do Mar & Tempo</h3>
+      <h3 className="text-lg font-semibold mb-2">
+        🌊 Condições do Mar & Tempo
+      </h3>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
 
-        {/* 🌡️ Temperatura */}
+        {/* Temperatura */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Temperatura</span>
           <span className="text-base font-medium">
-            {temp_c != null ? `${temp_c.toFixed(1)}°C` : "--"}
+            {typeof temp_c === "number" ? `${temp_c.toFixed(1)}°C` : "--"}
           </span>
         </div>
 
-        {/* ☁️ Céu */}
+        {/* Céu */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Condição do Céu</span>
           <span className="text-base font-medium">
-            {skyIcon} {clouds != null ? `${clouds}%` : "--"}
+            {skyIcon} {typeof clouds === "number" ? `${clouds}%` : "--"}
           </span>
         </div>
 
-        {/* 🌧️ Chance de chuva */}
+        {/* Chance de chuva */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Chance de Chuva</span>
           <span className="text-base font-medium">
-            {precip_probability != null ? `${precip_probability}%` : "--"}
+            {typeof precip_probability === "number"
+              ? `${precip_probability}%`
+              : "--"}
           </span>
         </div>
 
-        {/* 🌧️ Precipitação */}
+        {/* Precipitação */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Precipitação</span>
           <span className="text-base font-medium">
-            {precip_mm != null ? `${precip_mm.toFixed(1)} mm` : "--"}
+            {typeof precip_mm === "number" ? `${precip_mm.toFixed(1)} mm` : "--"}
           </span>
         </div>
 
-        {/* 🌊 Altura das Ondas */}
+        {/* Altura das ondas */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Altura das Ondas</span>
           <span className="text-base font-medium">
-            {wave_height_m != null ? `${wave_height_m.toFixed(1)} m` : "--"}
+            {typeof wave_height_m === "number"
+              ? `${wave_height_m.toFixed(1)} m`
+              : "--"}
           </span>
         </div>
 
-        {/* 🕒 Período */}
+        {/* Período */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Período</span>
           <span className="text-base font-medium">
@@ -160,42 +174,46 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
           </span>
         </div>
 
-        {/* 🌊 Direção do Swell */}
+        {/* Direção do swell */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Direção do Swell</span>
           <span className="text-base font-medium">
-            {direcaoSwell != null ? `${Number(direcaoSwell).toFixed(0)}°` : "--"}
+            {direcaoSwell != null ? `${Math.round(direcaoSwell)}°` : "--"}
           </span>
         </div>
 
-        {/* 💨 Vento */}
+        {/* Vento */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Vento</span>
           <span className="text-base font-medium">
-            {wind_speed_kmh != null ? `${wind_speed_kmh.toFixed(1)} km/h` : "--"}
-            {wind_dir_deg != null ? ` @ ${wind_dir_deg}°` : ""}
+            {typeof wind_speed_kmh === "number"
+              ? `${wind_speed_kmh.toFixed(1)} km/h`
+              : "--"}
+            {typeof wind_dir_deg === "number"
+              ? ` @ ${Math.round(wind_dir_deg)}°`
+              : ""}
           </span>
         </div>
 
-        {/* ⚡ Energia */}
+        {/* Energia */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Energia</span>
           <span className="text-base font-medium">
-            {energy != null ? `${Number(energy).toFixed(1)} (${energy_level})` : "--"}
+            {energy != null ? `${energy} (${energy_level})` : "--"}
           </span>
         </div>
 
-        {/* 🌊 Maré Agora */}
+        {/* Maré agora */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Maré Agora</span>
           <span className="text-base font-medium">
-            {forecast?.tide?.now?.height_m != null
+            {typeof forecast?.tide?.now?.height_m === "number"
               ? `${forecast.tide.now.height_m.toFixed(2)} m`
               : "--"}
           </span>
         </div>
 
-        {/* Próxima Maré */}
+        {/* Próxima maré */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Próxima Maré</span>
           <span className="text-base font-medium">{tideNextText}</span>
@@ -206,3 +224,4 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
 };
 
 export default OceanDataCard;
+
