@@ -32,7 +32,7 @@ interface Forecast {
 }
 
 interface Props {
-  forecast: Forecast | null;
+  forecast: Forecast | null;   // <- deve vir de forecast_day OU forecast_now
   isLoading: boolean;
 }
 
@@ -53,6 +53,9 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     );
   }
 
+  // ================================
+  // Desestruturação
+  // ================================
   const {
     wave_height_m,
     period_s,
@@ -67,8 +70,10 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     precip_probability,
     clouds,
     temp_c,
+    tide,
   } = forecast;
 
+  // período compatível
   const periodo =
     typeof wave_period_s === "number"
       ? wave_period_s
@@ -76,6 +81,7 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
       ? period_s
       : null;
 
+  // direção compatível
   const direcaoSwell =
     typeof wave_direction_deg === "number"
       ? wave_direction_deg
@@ -83,6 +89,9 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
       ? wave_dir_deg
       : null;
 
+  // ================================
+  // Ícone do céu
+  // ================================
   const getSkyIcon = () => {
     if (typeof precip_probability === "number" && precip_probability >= 70)
       return "🌧️";
@@ -94,9 +103,13 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
 
   const skyIcon = getSkyIcon();
 
+  // ================================
+  // Próxima maré
+  // ================================
   let tideNextText = "--";
-  const nextType = forecast?.tide?.next_extreme?.type;
-  const nextDate = forecast?.tide?.next_extreme?.date;
+
+  const nextType = tide?.next_extreme?.type;
+  const nextDate = tide?.next_extreme?.date;
 
   if (nextType && nextDate) {
     let hora = "--";
@@ -114,14 +127,15 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     }
   }
 
+  // ================================
+  // Render
+  // ================================
   return (
     <div className="rounded-2xl border border-border p-4">
-      <h3 className="text-lg font-semibold mb-2">
-        🌊 Condições do Mar & Tempo
-      </h3>
+      <h3 className="text-lg font-semibold mb-2">🌊 Condições do Mar & Tempo</h3>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-
+        
         {/* Temperatura */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Temperatura</span>
@@ -130,7 +144,7 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
           </span>
         </div>
 
-        {/* Céu */}
+        {/* Condição do Céu */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Condição do Céu</span>
           <span className="text-base font-medium">
@@ -188,9 +202,9 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
           <span className="text-base font-medium">
             {typeof wind_speed_kmh === "number"
               ? `${wind_speed_kmh.toFixed(1)} km/h`
-              : "--"}
+              : "--"}{" "}
             {typeof wind_dir_deg === "number"
-              ? ` @ ${Math.round(wind_dir_deg)}°`
+              ? `@ ${Math.round(wind_dir_deg)}°`
               : ""}
           </span>
         </div>
@@ -207,21 +221,23 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Maré Agora</span>
           <span className="text-base font-medium">
-            {typeof forecast?.tide?.now?.height_m === "number"
-              ? `${forecast.tide.now.height_m.toFixed(2)} m`
+            {typeof tide?.now?.height_m === "number"
+              ? `${tide.now.height_m.toFixed(2)} m`
               : "--"}
           </span>
         </div>
 
-        {/* Próxima maré */}
+        {/* Próxima Maré */}
         <div className="flex flex-col">
           <span className="text-muted-foreground text-sm">Próxima Maré</span>
           <span className="text-base font-medium">{tideNextText}</span>
         </div>
+
       </div>
     </div>
   );
 };
 
 export default OceanDataCard;
+
 
