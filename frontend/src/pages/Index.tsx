@@ -137,13 +137,20 @@ const Index = () => {
           ))}
         </div>
 
-        {/* ✅ CARD DE CONDIÇÕES */}
-      const cardData =
-        dayOffset === 0
-          ? api.forecast_now
-          : api.forecast_day;
+        {/* ✅ CARD DE CONDIÇÕES DO MAR */}
+        {(() => {
+          const cardData =
+            selectedDayOcean === 0
+              ? oceanData?.forecast_now
+              : oceanData?.forecast_day;
 
-      <OceanDataCard forecast={cardData} isLoading={isLoading} />
+          return (
+            <OceanDataCard
+              forecast={cardData || null}
+              isLoading={loadingData}
+            />
+          );
+        })()}
       </section>
 
       {/* === PAINEL DE EXPLICAÇÃO PERSONALIZADA === */}
@@ -228,4 +235,5 @@ const Index = () => {
 };
 
 export default Index;
+
 
