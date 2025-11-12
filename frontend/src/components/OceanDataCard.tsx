@@ -2,8 +2,8 @@ import React from "react";
 
 interface Forecast {
   wave_height_m: number | null;
-  period_s?: number | null;
   wave_period_s?: number | null;
+  period_s?: number | null;
   wave_dir_deg?: number | null;
   wave_direction_deg?: number | null;
 
@@ -19,27 +19,20 @@ interface Forecast {
   temp_c?: number | null;
 
   tide?: {
-    now?: {
-      time?: string;
-      height_m?: number;
-    };
-    next_extreme?: {
-      date?: string;
-      height?: number;
-      type?: "High" | "Low" | "high" | "low";
-    };
+    now?: { time?: string; height_m?: number };
+    next_extreme?: { date?: string; height?: number; type?: string };
   } | null;
 }
 
 interface Props {
-  forecast: Forecast | null;   // <- deve vir de forecast_day OU forecast_now
+  forecast: Forecast | null;
   isLoading: boolean;
 }
 
 const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-border p-4">
+      <div className="rounded-2xl border border-border p-4 text-center">
         <p className="text-muted-foreground">Carregando condições do mar...</p>
       </div>
     );
@@ -47,19 +40,19 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
 
   if (!forecast) {
     return (
-      <div className="rounded-2xl border border-border p-4">
-        <p className="text-muted-foreground">Sem dados disponíveis no momento.</p>
+      <div className="rounded-2xl border border-border p-4 text-center">
+        <p className="text-muted-foreground">
+          Sem dados disponíveis no momento.
+        </p>
       </div>
     );
   }
 
-  // ================================
-  // Desestruturação
-  // ================================
+  // Desestruturação segura
   const {
     wave_height_m,
-    period_s,
     wave_period_s,
+    period_s,
     wave_dir_deg,
     wave_direction_deg,
     wind_speed_kmh,
@@ -73,7 +66,7 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
     tide,
   } = forecast;
 
-  // período compatível
+  // Usa o campo disponível (alguns dias vêm com "wave_period_s", outros "period_s")
   const periodo =
     typeof wave_period_s === "number"
       ? wave_period_s
@@ -81,7 +74,6 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
       ? period_s
       : null;
 
-  // direção compatível
   const direcaoSwell =
     typeof wave_direction_deg === "number"
       ? wave_direction_deg
@@ -89,9 +81,7 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
       ? wave_dir_deg
       : null;
 
-  // ================================
-  // Ícone do céu
-  // ================================
+  // === CÉU ===
   const getSkyIcon = () => {
     if (typeof precip_probability === "number" && precip_probability >= 70)
       return "🌧️";
@@ -103,136 +93,131 @@ const OceanDataCard: React.FC<Props> = ({ forecast, isLoading }) => {
 
   const skyIcon = getSkyIcon();
 
-  // ================================
-  // Próxima maré
-  // ================================
+  // === PRÓXIMA MARÉ ===
   let tideNextText = "--";
-
   const nextType = tide?.next_extreme?.type;
   const nextDate = tide?.next_extreme?.date;
 
   if (nextType && nextDate) {
-    let hora = "--";
     try {
-      hora = new Date(nextDate).toLocaleTimeString("pt-BR", {
+      const hora = new Date(nextDate).toLocaleTimeString("pt-BR", {
         hour: "2-digit",
         minute: "2-digit",
       });
-    } catch {}
-
-    if (nextType.toLowerCase() === "high") {
-      tideNextText = `Maré toda cheia às ${hora}`;
-    } else if (nextType.toLowerCase() === "low") {
-      tideNextText = `Maré toda seca às ${hora}`;
+      tideNextText =
+        nextType.toLowerCase() === "high"
+          ? `Maré toda cheia às ${hora}`
+          : `Maré toda seca às ${hora}`;
+    } catch {
+      tideNextText = "--";
     }
   }
 
-  // ================================
-  // Render
-  // ================================
   return (
-    <div className="rounded-2xl border border-border p-4">
-      <h3 className="text-lg font-semibold mb-2">🌊 Condições do Mar & Tempo</h3>
+    <div className="rounded-2xl border border-border p-4 bg-white/70 backdrop-blur-sm shadow-sm transition-all">
+      <h3 className="text-lg font-semibold mb-3 text-blue-800 flex items-center gap-2 justify-center">
+        🌊 Condições do Mar & Tempo
+      </h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        
-        {/* Temperatura */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Temperatura</span>
-          <span className="text-base font-medium">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+        {/* 🌡️ Temperatura */}
+        <div>
+          <p className="text-muted-foreground text-sm">Temperatura</p>
+          <p className="text-base font-medium">
             {typeof temp_c === "number" ? `${temp_c.toFixed(1)}°C` : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Condição do Céu */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Condição do Céu</span>
-          <span className="text-base font-medium">
+        {/* 🌥️ Céu */}
+        <div>
+          <p className="text-muted-foreground text-sm">Condição do Céu</p>
+          <p className="text-base font-medium">
             {skyIcon} {typeof clouds === "number" ? `${clouds}%` : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Chance de chuva */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Chance de Chuva</span>
-          <span className="text-base font-medium">
+        {/* 🌧️ Chance de chuva */}
+        <div>
+          <p className="text-muted-foreground text-sm">Chance de Chuva</p>
+          <p className="text-base font-medium">
             {typeof precip_probability === "number"
               ? `${precip_probability}%`
               : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Precipitação */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Precipitação</span>
-          <span className="text-base font-medium">
-            {typeof precip_mm === "number" ? `${precip_mm.toFixed(1)} mm` : "--"}
-          </span>
+        {/* 🌦️ Precipitação */}
+        <div>
+          <p className="text-muted-foreground text-sm">Precipitação</p>
+          <p className="text-base font-medium">
+            {typeof precip_mm === "number"
+              ? `${precip_mm.toFixed(1)} mm`
+              : "--"}
+          </p>
         </div>
 
-        {/* Altura das ondas */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Altura das Ondas</span>
-          <span className="text-base font-medium">
+        {/* 🌊 Altura das ondas */}
+        <div>
+          <p className="text-muted-foreground text-sm">Altura das Ondas</p>
+          <p className="text-base font-medium">
             {typeof wave_height_m === "number"
               ? `${wave_height_m.toFixed(1)} m`
               : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Período */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Período</span>
-          <span className="text-base font-medium">
+        {/* 🔁 Período */}
+        <div>
+          <p className="text-muted-foreground text-sm">Período</p>
+          <p className="text-base font-medium">
             {periodo != null ? `${periodo.toFixed(1)} s` : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Direção do swell */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Direção do Swell</span>
-          <span className="text-base font-medium">
+        {/* 🧭 Direção do swell */}
+        <div>
+          <p className="text-muted-foreground text-sm">Direção do Swell</p>
+          <p className="text-base font-medium">
             {direcaoSwell != null ? `${Math.round(direcaoSwell)}°` : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Vento */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Vento</span>
-          <span className="text-base font-medium">
+        {/* 💨 Vento */}
+        <div>
+          <p className="text-muted-foreground text-sm">Vento</p>
+          <p className="text-base font-medium">
             {typeof wind_speed_kmh === "number"
               ? `${wind_speed_kmh.toFixed(1)} km/h`
-              : "--"}{" "}
+              : "--"}
             {typeof wind_dir_deg === "number"
-              ? `@ ${Math.round(wind_dir_deg)}°`
+              ? ` @ ${Math.round(wind_dir_deg)}°`
               : ""}
-          </span>
+          </p>
         </div>
 
-        {/* Energia */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Energia</span>
-          <span className="text-base font-medium">
+        {/* ⚡ Energia */}
+        <div>
+          <p className="text-muted-foreground text-sm">Energia</p>
+          <p className="text-base font-medium">
             {energy != null ? `${energy} (${energy_level})` : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Maré agora */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Maré Agora</span>
-          <span className="text-base font-medium">
+        {/* 🌊 Maré agora */}
+        <div>
+          <p className="text-muted-foreground text-sm">Maré Agora</p>
+          <p className="text-base font-medium">
             {typeof tide?.now?.height_m === "number"
               ? `${tide.now.height_m.toFixed(2)} m`
               : "--"}
-          </span>
+          </p>
         </div>
 
-        {/* Próxima Maré */}
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-sm">Próxima Maré</span>
-          <span className="text-base font-medium">{tideNextText}</span>
+        {/* 🌊 Próxima maré */}
+        <div>
+          <p className="text-muted-foreground text-sm">Próxima Maré</p>
+          <p className="text-base font-medium">{tideNextText}</p>
         </div>
-
       </div>
     </div>
   );
