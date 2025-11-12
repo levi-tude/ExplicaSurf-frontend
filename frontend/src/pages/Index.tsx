@@ -138,10 +138,12 @@ const Index = () => {
         </div>
 
         {/* ✅ CARD DE CONDIÇÕES */}
-        <OceanDataCard
-          forecast={oceanData?.forecast_now ?? null}
-          isLoading={loadingData}
-        />
+      const cardData =
+        dayOffset === 0
+          ? api.forecast_now
+          : api.forecast_day;
+
+      <OceanDataCard forecast={cardData} isLoading={isLoading} />
       </section>
 
       {/* === PAINEL DE EXPLICAÇÃO PERSONALIZADA === */}
