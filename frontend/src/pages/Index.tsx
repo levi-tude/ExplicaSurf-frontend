@@ -7,6 +7,7 @@ import TideChart from "@/components/charts/TideChart";
 import WaveHeightChart from "@/components/charts/WaveHeightChart";
 import WindChart from "@/components/charts/WindChart";
 import ExplanationCard from "@/components/ExplanationCard";
+import WeatherChart from "@/components/charts/WeatherChart";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -229,6 +230,15 @@ const Index = () => {
             p.wind_dir_deg ?? p.wind_wave_direction_deg ?? undefined,
         }))}
         isLoading={loadingData}
+      />
+      <WeatherChart
+        data={(oceanData?.forecast_series ?? []).map((p: any) => ({
+          time: p.time,
+          precip_probability: p.precip_probability,
+          clouds: p.clouds,
+          precip_mm: p.precip_mm,
+          temp_c: p.temp_c,
+        }))}
       />
     </main>
   );
