@@ -7,6 +7,10 @@ import {
   ResponsiveContainer,
   Legend,
   ReferenceArea,
+  CartesianGrid,
+  Defs,
+  LinearGradient,
+  Stop,
 } from "recharts";
 import React from "react";
 
@@ -17,39 +21,36 @@ interface Props {
     clouds: number;
     temp_c?: number;
   }[];
-  dayOffset: number;
   isLoading: boolean;
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
+  if (active && payload?.length) {
     const chuva = payload.find((p: any) => p.dataKey === "precip_probability");
     const nuvens = payload.find((p: any) => p.dataKey === "clouds");
 
     return (
       <div
         style={{
-          background: "white",
-          padding: "10px 12px",
-          borderRadius: "10px",
-          border: "1px solid #ddd",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+          background: "rgba(255,255,255,0.9)",
+          padding: "10px 14px",
+          borderRadius: "12px",
+          backdropFilter: "blur(6px)",
+          border: "1px solid #e6e6e6",
           fontSize: "13px",
         }}
       >
-        <div style={{ marginBottom: 6, fontWeight: 600, color: "#333" }}>
-          {label}
-        </div>
+        <div style={{ fontWeight: 600, marginBottom: 6 }}>{label}</div>
 
         {chuva && (
-          <div style={{ color: "#0077ff", marginBottom: 4 }}>
-            🌧️ <strong>Chuva:</strong> {chuva.value.toFixed(0)}%
+          <div style={{ color: "#0A66FF", marginBottom: 4 }}>
+            🌧 Chuva: <strong>{chuva.value.toFixed(0)}%</strong>
           </div>
         )}
 
         {nuvens && (
-          <div style={{ color: "#ff9900" }}>
-            ☁️ <strong>Nuvens:</strong> {nuvens.value.toFixed(0)}%
+          <div style={{ color: "#F59E0B" }}>
+            ☁️ Nuvens: <strong>{nuvens.value.toFixed(0)}%</strong>
           </div>
         )}
       </div>
@@ -61,7 +62,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const WeatherChart: React.FC<Props> = ({ data, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-border p-4">
+      <div className="rounded-2xl border p-4">
         <p className="text-muted-foreground">Carregando gráfico de clima...</p>
       </div>
     );
@@ -69,75 +70,82 @@ const WeatherChart: React.FC<Props> = ({ data, isLoading }) => {
 
   if (!data?.length) {
     return (
-      <div className="rounded-2xl border border-border p-4">
-        <p className="text-muted-foreground">Sem dados climáticos disponíveis.</p>
+      <div className="rounded-2xl border p-4">
+        <p className="text-muted-foreground">Sem dados climáticos.</p>
       </div>
     );
   }
 
-  // 🔹 Formatar rótulos para exibir data + hora
   const formatted = data.map((d) => {
     const dateObj = new Date(d.time);
-    const hour = dateObj.getHours().toString().padStart(2, "0") + "h";
-    const label = `${dateObj.getDate()}/${dateObj.getMonth() + 1} • ${hour}`;
-
     return {
       ...d,
-      label,
-      dayDate: dateObj.getDate(),
+      hour: dateObj.getHours(), // para reduzir rótulos
+      label:
+        dateObj.getDate() +
+        "/" +
+        (dateObj.getMonth() + 1) +
+        " • " +
+        dateObj.getHours().toString().padStart(2, "0") +
+        "h",
+      day: dateObj.getDate(),
     };
   });
 
-  // 🔹 Separar dias com faixas visuais
-  const uniqueDays = [...new Set(formatted.map((d) => d.dayDate))];
+  const uniqueDays = [...new Set(formatted.map((d) => d.day))];
 
   return (
-    <div className="rounded-2xl border border-border p-4">
-      <h3 className="text-lg font-semibold mb-2">🌦️ Clima (por horário)</h3>
-
-      <p className="text-muted-foreground text-sm mb-3">
-        O gráfico mostra chance de chuva (%) e cobertura de nuvens (%).
-        Cada dia está destacado com uma faixa de cor clara.
+    <div className="rounded-2xl border border-border p-6 shadow-sm bg-white">
+      <h3 className="text-xl font-semibold mb-2">🌦️ Clima (por horário)</h3>
+      <p className="text-muted-foreground text-sm mb-4">
+        Chance de chuva e cobertura de nuvens ao longo do dia.
       </p>
 
-      <ResponsiveContainer width="100%" height={330}>
-        <LineChart
-          data={formatted}
-          margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
-        >
-          {/* === Faixas que marcam cada dia === */}
+      <ResponsiveContainer width="100%" height={340}>
+        <LineChart data={formatted} margin={{ top: 30, right: 25, bottom: 10 }}>
+          {/* === Suaves divisões entre dias === */}
           {uniqueDays.map((day, i) => {
-            const firstIndex = formatted.findIndex((d) => d.dayDate === day);
-            const lastIndex = formatted
-              .map((d) => d.dayDate)
-              .lastIndexOf(day);
+            const f = formatted.findIndex((x) => x.day === day);
+            const l = formatted.map((x) => x.day).lastIndexOf(day);
 
             return (
               <ReferenceArea
                 key={day}
-                x1={formatted[firstIndex].label}
-                x2={formatted[lastIndex].label}
-                fill={i % 2 === 0 ? "#eef7ff" : "#f7faff"}
-                opacity={0.55}
+                x1={formatted[f].label}
+                x2={formatted[l].label}
+                fill={i % 2 === 0 ? "#f7faff" : "#fdfdfd"}
+                opacity={0.6}
               />
             );
           })}
 
+          {/* Grade mais leve */}
+          <CartesianGrid stroke="#e9e9e9" strokeDasharray="3 3" opacity={0.6} />
+
+          {/* Gradiente das linhas */}
+          <Defs>
+            <LinearGradient id="rainFill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#0A66FF" stopOpacity={0.25} />
+              <Stop offset="100%" stopColor="#0A66FF" stopOpacity={0} />
+            </LinearGradient>
+
+            <LinearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#F59E0B" stopOpacity={0.25} />
+              <Stop offset="100%" stopColor="#F59E0B" stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+
           <XAxis
             dataKey="label"
+            interval={5} // reduz rótulos
             tick={{ fontSize: 11 }}
-            interval={3}
             height={40}
-            label={{
-              value: "Horários do dia",
-              position: "insideBottom",
-              offset: -5,
-            }}
           />
 
           <YAxis
             domain={[0, 100]}
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 12 }}
+            width={30}
             label={{
               value: "%",
               angle: -90,
@@ -147,26 +155,36 @@ const WeatherChart: React.FC<Props> = ({ data, isLoading }) => {
           />
 
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
 
-          {/* 🌧️ CHANCE DE CHUVA */}
-          <Line
-            type="monotone"
-            dataKey="precip_probability"
-            stroke="#0077ff"
-            name="Chance de Chuva (%)"
-            strokeWidth={2.3}
-            dot={false}
+          <Legend
+            verticalAlign="top"
+            align="right"
+            iconSize={14}
+            formatter={(value: string) =>
+              value === "precip_probability"
+                ? "Chance de Chuva"
+                : "Cobertura de Nuvens"
+            }
           />
 
-          {/* ☁️ NUVENS */}
+          {/* 🌧 Linha de chuva */}
           <Line
-            type="monotone"
-            dataKey="clouds"
-            stroke="#ff9900"
-            name="Cobertura de Nuvens (%)"
+            type="monotoneX"
+            dataKey="precip_probability"
+            stroke="#0A66FF"
             strokeWidth={2.3}
-            dot={false}
+            dot={{ r: 2, fill: "#0A66FF" }}
+            fill="url(#rainFill)"
+          />
+
+          {/* ☁️ Linha de nuvens */}
+          <Line
+            type="monotoneX"
+            dataKey="clouds"
+            stroke="#F59E0B"
+            strokeWidth={2.3}
+            dot={{ r: 2, fill: "#F59E0B" }}
+            fill="url(#cloudFill)"
           />
         </LineChart>
       </ResponsiveContainer>
