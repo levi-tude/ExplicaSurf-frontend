@@ -178,6 +178,6 @@ const WeatherChart: React.FC<Props> = ({ data, isLoading }) => {
 export default WeatherChart;
 
 
-export default WeatherChart;
+
 
 
