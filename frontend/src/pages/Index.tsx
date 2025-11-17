@@ -11,6 +11,7 @@ import WeatherChart from "@/components/charts/WeatherChart";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 
+// Cache simples
 const forecastCache: Record<string, any> = {};
 
 const Index = () => {
@@ -43,8 +44,8 @@ const Index = () => {
         );
 
         if (!res.ok) throw new Error("Falha ao buscar dados");
-        const json = await res.json();
 
+        const json = await res.json();
         forecastCache[cacheKey] = json;
         setOceanData(json);
       } catch (err) {
@@ -99,13 +100,13 @@ const Index = () => {
     }
   };
 
-  // === INTERFACE ===
+  // === Interface ===
   return (
     <main className="flex flex-col gap-8 max-w-6xl mx-auto px-4 py-8">
       <Header />
       <Hero />
 
-      {/* === SELETOR DIA MAR === */}
+      {/* === SELETOR DE DIA PARA CONDIÇÕES DO MAR === */}
       <section className="text-center">
         <h2 className="text-lg font-semibold mb-2 text-blue-700">
           🌊 Selecione o dia para ver as condições do mar
@@ -127,6 +128,7 @@ const Index = () => {
           ))}
         </div>
 
+        {/* Card de condições */}
         {(() => {
           const cardData =
             selectedDayOcean === 0
@@ -142,19 +144,15 @@ const Index = () => {
         })()}
       </section>
 
-      {/* === PERSONALIZAÇÃO === */}
+      {/* === PAINEL DE PERSONALIZAÇÃO === */}
       <section className="bg-gradient-to-br from-blue-100 via-cyan-100 to-teal-100 border border-blue-200 rounded-2xl p-6 shadow-md flex flex-col items-center gap-5 transition-all">
         <h2 className="text-xl font-semibold text-blue-800 text-center">
           🎚️ Personalize sua explicação
         </h2>
 
-        <SkillLevelSelector
-          level={level}
-          onLevelChange={setLevel}
-          onGenerate={handleGenerateExplanation}
-          isLoading={loadingExplain}
-        />
+        <SkillLevelSelector level={level} onLevelChange={setLevel} />
 
+        {/* Seletor de dia da explicação */}
         <div className="flex gap-3 justify-center mt-2">
           {["Hoje", "Amanhã", "Depois"].map((label, index) => (
             <button
@@ -171,7 +169,7 @@ const Index = () => {
           ))}
         </div>
 
-        {/* ✅ BOTÃO FECHADO CORRETAMENTE */}
+        {/* === Único botão final === */}
         <button
           onClick={handleGenerateExplanation}
           disabled={loadingExplain}
@@ -232,6 +230,9 @@ const Index = () => {
     </main>
   );
 };
+
+export default Index;
+
 
 export default Index;
 
