@@ -27,16 +27,6 @@ const SkillLevelSelector = ({ level, onLevelChange, onGenerate, isLoading }: Ski
           </SelectContent>
         </Select>
       </div>
-      
-      <Button
-        onClick={onGenerate}
-        disabled={isLoading || !level}
-        className="w-full ocean-gradient hover:opacity-90 transition-opacity"
-        size="lg"
-      >
-        <Sparkles className="mr-2 h-5 w-5" />
-        {isLoading ? "Gerando..." : "Gerar Explicação"}
-      </Button>
     </div>
   );
 };
