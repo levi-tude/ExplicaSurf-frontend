@@ -190,7 +190,6 @@ const Index = () => {
           className="mt-3 px-6 py-2 bg-gradient-to-r from-blue-600 to-teal-400 text-white rounded-xl font-semibold shadow-md transition hover:scale-105 disabled:opacity-50"
         >
           {loadingExplain ? "Gerando explicação..." : "Gerar explicação com IA"}
-        </button>
       </section>
 
       {/* === EXPLICAÇÃO === */}
