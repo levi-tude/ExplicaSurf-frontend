@@ -24,14 +24,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<AuthPage />} />
 
-    <Route
-      path="/"
-      element={
-        <ProtectedRoute>
-          <Index />
-        </ProtectedRoute>
-      }
-    />
+    {/* Home pública: visitante pode ver previsão e explicação genérica sem cadastro */}
+    <Route path="/" element={<Index />} />
 
     <Route
       path="/perfil"

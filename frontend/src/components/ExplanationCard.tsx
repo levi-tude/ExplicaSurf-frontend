@@ -1,11 +1,17 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 interface Props {
   explanation: string;
   isLoading: boolean;
+  isGeneric?: boolean;
 }
 
-const ExplanationCard: React.FC<Props> = ({ explanation, isLoading }) => {
+const ExplanationCard: React.FC<Props> = ({
+  explanation,
+  isLoading,
+  isGeneric = false,
+}) => {
   
   // ✅ Função de leitura em voz alta
   const speakText = () => {
@@ -39,7 +45,19 @@ const ExplanationCard: React.FC<Props> = ({ explanation, isLoading }) => {
 
   return (
     <div className="rounded-2xl border border-border p-4 flex flex-col gap-3">
-      <h3 className="text-lg font-semibold">📘 Explicação Personalizada</h3>
+      <h3 className="text-lg font-semibold">
+        {isGeneric ? "📘 Explicação genérica" : "📘 Explicação personalizada"}
+      </h3>
+
+      {isGeneric && (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          Gerada sem perfil.{" "}
+          <Link to="/auth" className="underline font-medium">
+            Cadastre-se
+          </Link>{" "}
+          para receber uma explicação com seu nome, base e experiência.
+        </p>
+      )}
 
       <p className="whitespace-pre-line text-sm leading-relaxed">
         {explanation}

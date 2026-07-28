@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import bgImage from "/surfbackground.webp"; // ✅ imagem de fundo
 
 const AuthPage = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [surfLevel, setSurfLevel] = useState("iniciante");
   const [stance, setStance] = useState("");
@@ -174,12 +176,28 @@ const AuthPage = () => {
         <p className="text-sm mt-4 text-gray-300 text-center">
           {isSignUp ? "Já tem conta?" : "Ainda não tem conta?"}{" "}
           <button
+            type="button"
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-blue-400 hover:underline"
           >
             {isSignUp ? "Entrar" : "Cadastrar-se"}
           </button>
         </p>
+
+        <div className="mt-5 pt-4 border-t border-white/10">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="w-full bg-transparent border border-white/30 hover:bg-white/10 text-white font-medium py-2 rounded transition"
+          >
+            Continuar sem cadastro
+          </button>
+          <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+            Você verá a previsão normalmente. A explicação com IA será{" "}
+            <span className="text-amber-300 font-medium">genérica</span> (sem
+            nome, base ou experiência do perfil). Cadastre-se para personalizar.
+          </p>
+        </div>
       </div>
     </div>
   );

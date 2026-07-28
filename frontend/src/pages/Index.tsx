@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import SkillLevelSelector from "@/components/SkillLevelSelector";
@@ -10,21 +11,25 @@ import ExplanationCard from "@/components/ExplanationCard";
 import WeatherChart from "@/components/charts/WeatherChart";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
 
 // Cache simples
 const forecastCache: Record<string, any> = {};
 
 const Index = () => {
+  const { user } = useAuth();
   const [oceanData, setOceanData] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [loadingExplain, setLoadingExplain] = useState(false);
   const [level, setLevel] = useState("iniciante");
   const [explanation, setExplanation] = useState<string>("");
+  const [explanationIsGeneric, setExplanationIsGeneric] = useState(false);
 
   const [selectedDayOcean, setSelectedDayOcean] = useState(0);
   const [selectedDayExplain, setSelectedDayExplain] = useState(0);
 
   const API_BASE = "https://explicasurf-backend.onrender.com";
+  const isGuest = !user;
 
   // === Buscar dados do mar ===
   useEffect(() => {
@@ -59,39 +64,54 @@ const Index = () => {
     fetchOcean();
   }, [selectedDayOcean, level]);
 
-  // === Gerar explicação IA ===
+  // === Gerar explicação IA (logado = perfil; visitante = genérica) ===
   const handleGenerateExplanation = async () => {
     try {
       setLoadingExplain(true);
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      let name = "Surfista";
+      let stance = "";
+      let experience = 0;
+      let generic = true;
 
-      if (userError || !user) throw new Error("Usuário não autenticado");
+      if (user) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("name, stance, surf_level, experience_months")
+          .eq("id", user.id)
+          .single();
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("name, stance, surf_level, experience_months")
-        .eq("id", user.id)
-        .single();
+        name = profileData?.name || "Surfista";
+        stance = profileData?.stance || "";
+        experience = profileData?.experience_months || 0;
+        generic = false;
+      }
 
-      const name = profileData?.name || "Surfista";
-      const stance = profileData?.stance || "regular";
-      const experience = profileData?.experience_months || 0;
+      const qs = new URLSearchParams({
+        level,
+        day: String(selectedDayExplain),
+        ai: "on",
+        name,
+        experience_months: String(experience),
+      });
+      if (stance) qs.set("stance", stance);
 
-      const res = await fetch(
-        `${API_BASE}/api/explain?level=${level}&day=${selectedDayExplain}&ai=on` +
-          `&name=${encodeURIComponent(name)}` +
-          `&stance=${encodeURIComponent(stance)}` +
-          `&experience_months=${encodeURIComponent(experience)}`
-      );
+      const res = await fetch(`${API_BASE}/api/explain?${qs.toString()}`);
 
       if (!res.ok) throw new Error("Falha ao gerar explicação");
 
       const json = await res.json();
-      setExplanation(json.explanation_pt || "Erro ao gerar explicação.");
+      const text = json.explanation_pt || "";
+      if (!text.trim()) {
+        throw new Error("Resposta da IA vazia");
+      }
+      setExplanationIsGeneric(generic);
+      setExplanation(text);
+      if (generic) {
+        toast.message("Explicação genérica gerada", {
+          description: "Cadastre-se para personalizar com seu perfil.",
+        });
+      }
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar explicação com IA");
@@ -150,6 +170,17 @@ const Index = () => {
           🎚️ Personalize sua explicação
         </h2>
 
+        {isGuest && (
+          <div className="w-full max-w-lg rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 text-center">
+            Você está sem cadastro: a explicação será{" "}
+            <strong>genérica</strong> (só o nível abaixo).{" "}
+            <Link to="/auth" className="underline font-medium text-amber-900">
+              Entrar ou cadastrar
+            </Link>{" "}
+            para personalizar com nome, base e experiência.
+          </div>
+        )}
+
         <SkillLevelSelector level={level} onLevelChange={setLevel} />
 
         {/* Seletor de dia da explicação */}
@@ -184,6 +215,7 @@ const Index = () => {
         <ExplanationCard
           explanation={explanation}
           isLoading={loadingExplain}
+          isGeneric={explanationIsGeneric}
         />
       )}
 
