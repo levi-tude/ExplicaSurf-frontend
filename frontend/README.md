@@ -1,73 +1,159 @@
-# Welcome to your Lovable project
+# ExplicaSurf — Frontend (TCC)
 
-## Project info
+Interface web do **ExplicaSurf**: aplicação que interpreta previsões oceânicas e climáticas com Inteligência Artificial, tornadas acessíveis para surfistas de diferentes níveis.
 
-**URL**: https://lovable.dev/projects/b65a50c1-9c9e-4950-a004-9bc2511bce4c
+> **Protótipo acadêmico (TCC)** — Ciência da Computação, UNIJORGE (Salvador/BA).  
+> Foco: **Stella Maris**. Site: [explicasurfstella.com.br](https://explicasurfstella.com.br)
 
-## How can I edit this code?
+Este repositório é **apenas o frontend**. O backend Flask está em  
+[levi-tude/ExplicaSurf-backend](https://github.com/levi-tude/ExplicaSurf-backend).
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## O que o projeto resolve
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b65a50c1-9c9e-4950-a004-9bc2511bce4c) and start prompting.
+Plataformas como Surfline e Surfguru entregam dados técnicos (swell, período, vento, maré) que muitos surfistas — sobretudo iniciantes — têm dificuldade de interpretar. Isso afeta **performance e segurança**.
 
-Changes made via Lovable will be committed automatically to this repo.
+O ExplicaSurf parte do conceito de *ocean literacy* (alfabetização oceânica) e oferece:
 
-**Use your preferred IDE**
+- Dados do mar e do tempo em cards e gráficos
+- Explicação em linguagem natural (Gemini), personalizada por nível, stance e experiência
+- Conhecimento local de Stella Maris injetado no prompt (via backend)
+- Login/perfil (Supabase) ou modo visitante (explicação genérica)
+- Leitura em voz alta (TTS) da explicação
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Artigo: *ExplicaSurf: Aplicação Web para Interpretação de Previsões de Maré e Clima para Surfistas* (Levi Davi Tude Silva; orient. Jailson Santos, Marcos Santos Leite).
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## Stack
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+| Tecnologia | Uso |
+|------------|-----|
+| React + Vite + TypeScript | SPA |
+| Tailwind CSS + shadcn/ui | UI |
+| Recharts / charts próprios | Gráficos (onda, energia, vento, maré, clima) |
+| React Router | Rotas (home, auth, perfil) |
+| Supabase Auth + `profiles` | Cadastro, login, perfil do surfista |
+| Fetch HTTPS → Flask | Endpoint `/api/explain` |
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Funcionalidades da interface
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- **Hero / home** — Stella Maris, seleção de nível e dia (hoje / amanhã / depois)
+- **OceanDataCard** — altura, período, energia, vento, maré, tamanho percebido
+- **Gráficos** — WaveHeight, Energy, Wind, Tide, Weather
+- **ExplanationCard** — texto da IA + TTS (pt-BR)
+- **Auth** — signup/login; perfil (nome, stance, surf_level, experience_months)
+- **Warmup** — ping leve no backend para reduzir cold start do Render
+
+---
+
+## Estrutura (pasta `frontend/`)
+
+```
+frontend/
+├── src/
+│   ├── components/       # UI, OceanDataCard, ExplanationCard, charts/
+│   ├── pages/            # Index, AuthPage, ProfilePage
+│   ├── context/          # AuthContext
+│   ├── lib/              # supabaseClient, utils
+│   ├── App.tsx
+│   └── main.tsx
+├── public/               # assets (hero, backgrounds)
+├── package.json
+└── README.md             # este arquivo
+```
+
+No GitHub, os arquivos ficam sob o prefixo `frontend/` neste repositório.
+
+---
+
+## Pré-requisitos
+
+- Node.js 18+
+- Conta Supabase (Auth + tabela `profiles`)
+- Backend ExplicaSurf em execução (local ou [Render](https://explicasurf-backend.onrender.com))
+
+---
+
+## Setup local
+
+```bash
+git clone https://github.com/levi-tude/ExplicaSurf-frontend.git
+cd ExplicaSurf-frontend/frontend
+npm install
+cp .env.example .env   # se existir; senão crie .env (ver abaixo)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Abra a URL do Vite (geralmente `http://localhost:5173`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Variáveis de ambiente
 
-**Use GitHub Codespaces**
+Crie `frontend/.env` (não versionar):
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```env
+VITE_SUPABASE_URL=https://SEU_PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_anon_key
+VITE_API_BASE_URL=http://localhost:5000
+```
 
-## What technologies are used for this project?
+Em produção, a home usa o backend no Render (`explicasurf-backend.onrender.com`). Prefira `VITE_API_BASE_URL` para apontar ao ambiente desejado.
 
-This project is built with:
+Campos típicos em `profiles`: `name`, `stance`, `surf_level`, `experience_months`.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## Scripts
 
-Simply open [Lovable](https://lovable.dev/projects/b65a50c1-9c9e-4950-a004-9bc2511bce4c) and click on Share -> Publish.
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run preview` | Preview do build |
+| `npm run lint` | ESLint |
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## Fluxo com o backend
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Frontend chama `GET /api/explain?level=...&day=...` (dados do mar; `ai=off` implícito ou sem IA).
+2. Com usuário logado, envia também `name`, `stance`, `experience_months` e `ai=on` para gerar explicação personalizada.
+3. Backend agrega Open-Meteo + WorldTides + Gemini e devolve JSON (série horária + texto).
+4. UI renderiza cards, gráficos e `ExplanationCard`.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Detalhes da API: repositório [ExplicaSurf-backend](https://github.com/levi-tude/ExplicaSurf-backend).
+
+---
+
+## Produção
+
+- **Frontend:** [explicasurfstella.com.br](https://explicasurfstella.com.br)
+- **Backend:** Render — `explicasurf-backend.onrender.com` (free tier pode “dormir”; o warmup mitiga)
+
+---
+
+## Relação com o produto comercial
+
+| | Este repo (TCC) | Produto comercial |
+|--|-----------------|-------------------|
+| Pasta local | `ExplicaSurf/frontend` | `ExplicaSurf-tio` |
+| Escopo | 1 praia (Stella) | Multi-praia Salvador |
+| Stack UI | React + Vite | Next.js 16 + Supabase |
+
+O comercial **não depende** deste frontend em runtime; a lógica de domínio foi portada a partir do TCC.
+
+---
+
+## Autor
+
+**Levi Davi Tude Silva** — TCC, UNIJORGE  
+Contato: levidavitudesilva@gmail.com
+
+---
+
+## Licença
+
+Projeto acadêmico / protótipo. Consulte o autor para uso além do TCC.
